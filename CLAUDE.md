@@ -53,10 +53,23 @@ src/
     report.ts        jsPDF readiness report (client-side)
   demo/              personas, scenarios (+ buildScenario), render.ts (canvas specimens),
                      package.ts (→ searchable PDF or degraded JPEG), devHarness.ts (dev-only window.__rl)
-  app/               Next.js routes: /, /apply, /apply/[appId], /workspace/*, /demo, /privacy, /about,
-                     /api/assistant (only server code; calls Groq)
-  components/        ui.tsx (design primitives), site.tsx, workspace/*
+  knowledge/onboarding.ts  roles, work types, states, goals (→ app + variant), stateNote(), recommendPf()
+  lib/useRunCheck.ts       shared staged check runner + inputSignature() (detects changes since a run)
+  app/               Next.js routes:
+                     /            landing (one CTA: Get started)
+                     /start       onboarding: role → work → state → goal (or "not sure" helper) → plan + consent
+                     /workspace   GUIDED flow (session.guideStep): documents → confirm → details → check → results
+                     /workspace/documents|review|profile|findings|check|report   "All details" views for power users
+                     /apply, /apply/[appId], /demo, /privacy, /about, /api/assistant (only server code; calls Groq)
+  components/        ui.tsx (design primitives), site.tsx, flow.tsx (onboarding StepFrame/Choice),
+                     guide/* (guided steps), workspace/* (shell, assistant, findings, evidence)
 ```
+
+### UX principles (keep the guided flow simple)
+
+- One question or one task per screen; one primary button; plain words. Details (evidence, sources, reasoning) sit behind "Show evidence" / "All details".
+- New screens use `StepFrame`/`Choice` (onboarding) or `StepTitle`/`ActionBar` (guide) and the `.step-fwd`/`.step-back`/`.rise` transitions in globals.css.
+- The onboarding profile (role, work, state, goal) is not personal data; it may be sent to the AI as context. State-specific rules are NOT researched yet — `stateNote()` must say so rather than guess.
 
 ### Adding things
 

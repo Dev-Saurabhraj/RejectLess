@@ -12,12 +12,14 @@ _Last updated: 2026-11-02. Update this file when you finish or start something; 
 - **Assistant**: offline answers from the knowledge base (BM25); optional Groq AI with redaction, privacy-safe summaries and validated citations. Groq key verified working (API level).
 - **Privacy**: local processing, 24 h sliding expiry, originals not kept, Privacy Centre with verified deletion.
 - **Demo**: 14 seeded scenarios with fix walkthroughs; Scenario Builder with 17 plantable defects; dev harness `window.__rl`.
-- **Quality**: 63 unit tests; production build passes; all scenarios verified in browser.
+- **Quality**: 71 unit tests; all scenarios verified in browser.
+- **Guided UX (redesign)**: minimal landing page; onboarding at /start (who you are, work type, state, goal, "not sure" PF recommender, plan + consent); guided workspace (documents one at a time → confirm only unclear/differing values → details → check → plain-language results with one action per issue, evidence on demand, "Explain this"); floating Ask; detailed views kept under "All details". AI reasoning clicked through in the UI with Groq (grounded, cited).
 
 ## Known gaps
 
 - [ ] No Playwright end-to-end tests yet.
-- [ ] AI mode not yet clicked through in the UI (API tested); Hindi questions untested.
+- [ ] Hindi questions to the AI untested; Hindi UI not built.
+- [ ] State-specific rules (income certificate issuer/validity per state) not researched — onboarding collects the state and says so.
 - [ ] IFSC reference covers fictional demo banks only — bundle a dated RBI extract.
 - [ ] "Verify" rules need confirming against the official EPF Scheme 2026 gazette text and NSP guidelines.
 - [ ] PDF report shows Devanagari transliterated (no Devanagari font in jsPDF).

@@ -23,14 +23,13 @@ Optional AI answers: copy `.env.example` to `.env.local` and set `GROQ_API_KEY`.
 
 ## Demo in 3 minutes
 
-1. Open **/demo** → scenario **10 "Fix it and check again"** (or 02, 07, 08).
-2. Watch the fictional documents being generated and read (PDF text layer / on-device OCR).
-3. **Review documents** → click a field to see where it was read on the page.
-4. **Check** → run the readiness check (each stage is real, with timings).
-5. **Findings** → open "Possible name variation": evidence table, highlighted region, reasoning chain, sources.
-6. **Ask** → "How do I fix this?" — grounded answer with cited sources.
-7. In the demo guide, **Apply** the corrections → **Run again** → findings move to **Resolved** with history.
-8. **Report** → download the PDF. **Privacy** → see exactly what is stored, then delete it.
+1. Landing page → **Get started**: show onboarding (who you are → work type → state → goal, or "I'm not sure" → recommendation → plan). Then go back.
+2. Open **/demo** → scenario **10 "Fix it and check again"** (or 02, 07, 08). Fictional documents are generated and read on the device.
+3. **Documents** → **Confirm**: only values that differ between documents (Saurabh vs Sourabh) are asked about; "Show on document" highlights where each was read.
+4. **Your details** → **Check my application**: real stages, then plain-language results with one action per issue.
+5. Open **Show evidence** on an issue, then **Explain this** for a cited answer (turn on AI reasoning for Groq).
+6. In the demo guide, **Apply** the corrections → **Check again** → issues move to **Fixed**.
+7. **Download report**; open **Privacy** to show what's stored, then delete it. "All details" opens the full findings, evidence and profile views.
 
 The **Scenario Builder** on /demo lets you plant any combination of 17 defects (name variants, Hindi names, DOB swaps, account typos, merged IFSCs, blur, cropping, missing documents, eligibility problems) and generates fresh documents that the real pipeline analyses — nothing is pre-scripted.
 
