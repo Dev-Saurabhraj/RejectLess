@@ -114,6 +114,8 @@ export interface DocumentRecord {
   /** Increments each time the document is replaced. */
   version: number;
   synthetic: boolean;
+  /** The checklist slot the user uploaded this into (detection may find another type). */
+  requestedType?: DocTypeId;
 }
 
 /** Text with layout, produced by the ingest layer (pdf.js text layer or Tesseract). */
@@ -277,4 +279,6 @@ export interface ValidationRun {
   findings: Finding[];
   stages: { id: string; label: string; ms: number; count: number }[];
   ruleVersions: string;
+  /** Fingerprint of the documents and details this run checked (detects later changes). */
+  inputSig?: string;
 }

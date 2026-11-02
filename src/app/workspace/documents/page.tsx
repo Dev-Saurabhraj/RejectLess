@@ -16,7 +16,7 @@ import { DOC_TYPES } from "@/knowledge/documents";
 
 const NEED = { required: "Needed", conditional: "Sometimes needed", recommended: "Optional" } as const;
 
-export default function PreparePage() {
+export default function DocumentsPage() {
   const { session, variant } = useActiveSession();
   const progress = useDocProgress();
   const removeDocument = useSession((s) => s.removeDocument);

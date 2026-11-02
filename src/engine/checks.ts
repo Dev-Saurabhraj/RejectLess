@@ -22,7 +22,9 @@ type CheckFn = (rule: RuleDef, ctx: CheckContext) => Finding[];
 // ---------------------------------------------------------------------------- helpers
 
 function obs(v: ProfileValue): Observation {
-  const display = SENSITIVE_FIELDS.includes(v.key) ? maskIdentifier(v.key, v.value) : v.value;
+  // Account numbers stay readable on the user's own device so a typo can be spotted;
+  // exports (report, AI) mask them separately. Other identifiers are always masked.
+  const display = SENSITIVE_FIELDS.includes(v.key) && v.key !== "account_number" ? maskIdentifier(v.key, v.value) : v.value;
   return {
     docId: v.docId,
     docLabel: v.docLabel,
@@ -479,7 +481,7 @@ const CHECKS: Record<string, CheckFn> = {
     const keys = Array.from(groups.keys());
     const signals: string[] = [];
     for (const [k, g] of groups) {
-      const shown = SENSITIVE_FIELDS.includes(field as never) ? maskIdentifier(field as string, k) : k;
+      const shown = SENSITIVE_FIELDS.includes(field as never) && field !== "account_number" ? maskIdentifier(field as string, k) : k;
       signals.push(`${g.map((v) => v.docLabel).join(", ")}: ${shown}`);
     }
     let hint = "";

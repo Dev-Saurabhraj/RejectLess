@@ -1,58 +1,20 @@
 "use client";
 
-import { useState } from "react";
 import Link from "next/link";
 import clsx from "clsx";
 import { ArrowRight, Check, Circle, Play, RotateCw } from "lucide-react";
-import type { Finding, ValidationRun } from "@/engine/types";
-import { STAGES, runStage, rulesFor, sortFindings } from "@/engine/run";
+import { STAGES, rulesFor } from "@/engine/run";
 import { btn, Button, Card, Eyebrow, Notice, Spinner, STATUS_META } from "@/components/ui";
 import { useActiveSession } from "@/lib/hooks";
-import { useSession } from "@/lib/store/session";
-
-type StageState = { status: "idle" | "running" | "done"; ms?: number; count?: number };
-
-// Yield to the browser so each stage paints. setTimeout (not rAF) keeps working in background tabs.
-const nextFrame = () => new Promise<void>((r) => setTimeout(r, 0));
+import { useRunCheck } from "@/lib/useRunCheck";
 
 export default function CheckPage() {
   const { session, variant, latestRun } = useActiveSession();
-  const recordRun = useSession((s) => s.recordRun);
-  const [stages, setStages] = useState<Record<string, StageState>>({});
-  const [running, setRunning] = useState(false);
-  const [justRan, setJustRan] = useState<ValidationRun>();
+  const { run, running, stages, lastRun: justRan } = useRunCheck();
   if (!session || !variant) return null;
 
   const processing = session.documents.filter((d) => d.status === "processing").length;
   const ruleCount = rulesFor(variant).length;
-
-  async function run() {
-    if (!session || !variant) return;
-    setRunning(true);
-    setJustRan(undefined);
-    setStages(Object.fromEntries(STAGES.map((s) => [s.id, { status: "idle" }])));
-    const input = { variant, documents: session.documents, draft: session.draft };
-    const all: Finding[] = [];
-    const timings: ValidationRun["stages"] = [];
-    for (const s of STAGES) {
-      setStages((st) => ({ ...st, [s.id]: { status: "running" } }));
-      await nextFrame(); // let the UI paint the current stage — no artificial delay
-      const res = runStage(s.id, input);
-      all.push(...res.findings);
-      timings.push({ id: s.id, label: s.label, ms: res.ms, count: res.findings.length });
-      setStages((st) => ({ ...st, [s.id]: { status: "done", ms: res.ms, count: res.findings.length } }));
-    }
-    const result: ValidationRun = {
-      id: `run-${Date.now().toString(36)}`,
-      at: new Date().toISOString(),
-      findings: sortFindings(all),
-      stages: timings,
-      ruleVersions: rulesFor(variant)[0]?.version ?? "",
-    };
-    recordRun(result);
-    setJustRan(result);
-    setRunning(false);
-  }
 
   const shown = justRan ?? latestRun;
   const counts = shown

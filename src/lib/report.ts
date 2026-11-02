@@ -3,7 +3,9 @@
 import type { Finding } from "@/engine/types";
 import type { Session } from "@/lib/store/session";
 import { getApplication } from "@/knowledge/applications";
-import { DOC_TYPES } from "@/knowledge/documents";
+import { DOC_TYPES, SENSITIVE_FIELDS } from "@/knowledge/documents";
+import { maskIdentifier } from "@/engine/validators";
+import type { FieldKey } from "@/engine/types";
 import { getSource } from "@/knowledge/sources";
 import { rulesFor } from "@/engine/run";
 import { transliterate, hasDevanagari } from "@/engine/text/transliterate";
@@ -92,7 +94,9 @@ export async function downloadReport(session: Session) {
       const res = session.resolutions[f.key];
       text(`${f.title}  [${f.status === "action" ? "Action required" : "Needs review"} · ${f.severity} · ${BASIS_LABEL[f.basis]}]`, 10.5, { bold: true });
       text(f.summary, 10, { indent: 10 });
-      f.observations.slice(0, 6).forEach((o) => text(`${o.docLabel} — ${o.fieldLabel}: ${o.value}`, 9, { indent: 18, color: [71, 76, 82] }));
+      f.observations.slice(0, 6).forEach((o) =>
+        text(`${o.docLabel} — ${o.fieldLabel}: ${SENSITIVE_FIELDS.includes(o.field as FieldKey) ? maskIdentifier(String(o.field), o.value) : o.value}`, 9, { indent: 18, color: [71, 76, 82] }),
+      );
       text(`What to do: ${f.recommendation}`, 10, { indent: 10 });
       if (res?.state === "confirmed_correct") text("You confirmed these values are correct.", 9, { indent: 10, color: [29, 115, 72] });
       if (res?.state === "acknowledged") text("Marked by you for follow-up.", 9, { indent: 10, color: [107, 112, 118] });

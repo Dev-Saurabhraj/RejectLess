@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
+import { useRouter } from "next/navigation";
 import clsx from "clsx";
 import { Check, ChevronDown, FlaskConical, Wrench } from "lucide-react";
 import { Button, Spinner } from "@/components/ui";
@@ -15,6 +15,8 @@ export function DemoGuide() {
   const scenario = session?.demoScenarioId === "custom" ? getCustomScenario() : seeded;
   const [open, setOpen] = useState(() => typeof window !== "undefined" && window.innerWidth >= 1400);
   const [busy, setBusy] = useState<string>();
+  const router = useRouter();
+  const setGuideStep = useSession((s) => s.setGuideStep);
   const activity = useSession((s) => s.session?.activity);
   const applied = (activity ?? []).filter((a) => a.text.startsWith("Demo fix applied: ")).map((a) => a.text.slice(18));
   if (!scenario) return null;
@@ -31,13 +33,18 @@ export function DemoGuide() {
   }
 
   return (
-    <aside className="fixed bottom-3 left-3 z-40 w-[min(360px,calc(100vw-24px))] rounded-2xl border border-external/25 bg-surface shadow-xl">
-      <button onClick={() => setOpen(!open)} className="flex w-full items-center gap-2 px-4 py-3 text-left" aria-expanded={open}>
+    <aside
+      className={clsx(
+        "fixed right-3 top-[68px] z-40 rounded-2xl border border-external/25 bg-surface shadow-xl sm:bottom-6 sm:left-3 sm:right-auto sm:top-auto sm:w-[340px]",
+        open ? "w-[min(340px,calc(100vw-24px))]" : "w-auto",
+      )}
+    >
+      <button onClick={() => setOpen(!open)} className="flex w-full items-center gap-2 px-4 py-3 text-left" aria-expanded={open} aria-label={`Demo ${scenario.number}: ${scenario.title}`}>
         <FlaskConical className="size-4 text-external" />
-        <span className="flex-1 text-[13px] font-medium">
+        <span className={clsx("flex-1 text-[13px] font-medium", !open && "hidden sm:inline")}>
           Demo {scenario.number} · {scenario.title}
         </span>
-        <ChevronDown className={clsx("size-4 text-ink-3 transition-transform", !open && "rotate-180")} />
+        <ChevronDown className={clsx("size-4 text-ink-3 transition-transform", !open && "hidden rotate-180 sm:block")} />
       </button>
       {open && (
         <div className="space-y-3 border-t border-line px-4 pb-4 pt-3 text-[13px]">
@@ -68,7 +75,11 @@ export function DemoGuide() {
                 })}
               </ul>
               <p className="mt-3 text-ink-3">
-                After applying, <Link href="/workspace/check" className="font-medium text-accent underline-offset-2 hover:underline">run the check again</Link> to see findings resolve.
+                After applying,{" "}
+                <button onClick={() => (setGuideStep("check"), router.push("/workspace"))} className="font-medium text-accent underline-offset-2 hover:underline">
+                  check again
+                </button>{" "}
+                to see findings resolve.
               </p>
             </div>
           )}

@@ -31,7 +31,7 @@ export async function validateFile(file: File): Promise<"pdf" | "image"> {
   throw new Error("Unsupported file. Please upload a PDF, JPG or PNG.");
 }
 
-export async function processFile(file: File, forcedType: DocTypeId | undefined, progress: ProgressFn): Promise<ProcessResult> {
+export async function processFile(file: File, forcedType: DocTypeId | undefined, progress: ProgressFn, hintType?: DocTypeId): Promise<ProcessResult> {
   const kind = await validateFile(file);
   const pages: { canvas: HTMLCanvasElement; lines: TextLine[] }[] = [];
   let method: "text-layer" | "ocr" = "text-layer";
@@ -83,7 +83,8 @@ export async function processFile(file: File, forcedType: DocTypeId | undefined,
 
   progress("Identifying document");
   const cls = classify(allLines);
-  const typeId = forcedType ?? cls.typeId;
+  // A hint (the checklist slot) is used only when detection can't tell what the document is.
+  const typeId = forcedType ?? (cls.typeId !== "unknown" ? cls.typeId : (hintType ?? "unknown"));
 
   progress("Extracting details");
   const { fields, missingFields } = extractFields(typeId, allLines, method);

@@ -4,34 +4,35 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import clsx from "clsx";
 import type { ReactNode } from "react";
-import { FlaskConical, MessageCircleQuestion, ShieldCheck } from "lucide-react";
+import { ArrowLeft, FlaskConical, LayoutList, MessageCircleQuestion, ShieldCheck } from "lucide-react";
 import { Logo } from "@/components/site";
 import { btn, Spinner } from "@/components/ui";
 import { useActiveSession } from "@/lib/hooks";
 import { useUi } from "@/lib/store/ui";
-import { isOpenIssue } from "@/engine/run";
+import { getGoal, goalForVariant, stateName } from "@/knowledge/onboarding";
 import { ConsentGate } from "./ConsentGate";
 import { AssistantPanel } from "./AssistantPanel";
 import { DemoGuide } from "./DemoGuide";
 
-const STAGES = [
-  { href: "/workspace", label: "Prepare" },
-  { href: "/workspace/review", label: "Review documents" },
-  { href: "/workspace/profile", label: "Profile" },
-  { href: "/workspace/check", label: "Check" },
-  { href: "/workspace/findings", label: "Findings" },
+const DETAIL_TABS = [
+  { href: "/workspace/documents", label: "Documents" },
+  { href: "/workspace/review", label: "What we read" },
+  { href: "/workspace/profile", label: "Side by side" },
+  { href: "/workspace/findings", label: "All findings" },
+  { href: "/workspace/check", label: "Run check" },
   { href: "/workspace/report", label: "Report" },
 ];
 
 export function WorkspaceShell({ children }: { children: ReactNode }) {
   const pathname = usePathname();
-  const { session, hydrated, app, variant, latestRun } = useActiveSession();
+  const { session, hydrated, app, variant } = useActiveSession();
   const openAssistant = useUi((s) => s.openAssistant);
+  const assistantOpen = useUi((s) => s.assistantOpen);
 
   if (!hydrated) {
     return (
       <div className="flex min-h-screen items-center justify-center gap-3 text-ink-3">
-        <Spinner /> Loading your session from this browser…
+        <Spinner /> Loading…
       </div>
     );
   }
@@ -39,93 +40,96 @@ export function WorkspaceShell({ children }: { children: ReactNode }) {
   if (!session || !app || !variant) {
     return (
       <div className="flex min-h-screen flex-col">
-        <header className="border-b border-line">
-          <div className="mx-auto flex h-16 max-w-6xl items-center px-4 sm:px-6">
-            <Logo />
-          </div>
+        <header className="mx-auto flex h-16 w-full max-w-5xl items-center px-5">
+          <Logo />
         </header>
-        <main className="mx-auto flex max-w-lg flex-1 flex-col items-center justify-center px-6 py-20 text-center">
-          <p className="text-[22px] font-semibold">No active session</p>
-          <p className="mt-2 text-ink-2">
-            Sessions live only in this browser and expire after 24 hours of inactivity — or were deleted. Start a new check or try the demo.
-          </p>
-          <div className="mt-6 flex flex-wrap justify-center gap-3">
-            <Link href="/apply" className={btn("primary")}>Start a new check</Link>
-            <Link href="/demo" className={btn("secondary")}>Open the demo</Link>
+        <main className="mx-auto flex max-w-md flex-1 flex-col items-center justify-center px-6 py-20 text-center">
+          <p className="text-[24px] font-semibold">Nothing in progress</p>
+          <p className="mt-2 text-ink-2">Checks are kept in this browser for 24 hours. Start a new one — it takes about 5 minutes.</p>
+          <div className="mt-7 flex flex-col gap-2 sm:flex-row">
+            <Link href="/start" className={btn("primary", "lg")}>Get started</Link>
+            <Link href="/demo" className={btn("ghost", "lg")}>Try a demo</Link>
           </div>
         </main>
       </div>
     );
   }
 
-  const openIssues = latestRun?.findings.filter(isOpenIssue).length ?? 0;
-  const analysed = session.documents.filter((d) => d.status === "analysed" || d.status === "needs_attention").length;
-  const badge: Record<string, string | undefined> = {
-    "/workspace": session.documents.length ? `${analysed}/${session.documents.length}` : undefined,
-    "/workspace/findings": latestRun ? String(openIssues) : undefined,
-  };
+  const guided = pathname === "/workspace";
+  const goal = getGoal(session.profile?.goal) ?? goalForVariant(session.appId, session.variantId);
+  const where = session.profile?.state ? stateName(session.profile.state) : undefined;
 
   return (
     <div className="flex min-h-screen flex-col">
-      <header className="sticky top-0 z-30 border-b border-line bg-bg/95 backdrop-blur">
-        <div className="mx-auto flex h-14 max-w-7xl items-center gap-3 px-4 sm:px-6">
+      <header className="sticky top-0 z-30 bg-bg/95 backdrop-blur">
+        <div className="mx-auto flex h-16 max-w-5xl items-center gap-3 px-5">
           <Logo className="shrink-0 [&>span]:hidden sm:[&>span]:inline" />
-          <span className="hidden h-5 w-px bg-line-strong sm:block" />
-          <div className="min-w-0 flex-1">
-            <p className="truncate text-[14px] font-medium leading-tight">
-              {app.shortName} · {variant.name}
-            </p>
-            <p className="truncate text-[12px] text-ink-3 tabular">
-              Session {session.id}
-              {session.demoScenarioId && <span className="ml-2 font-medium text-external">Demo · fictional data</span>}
+          <div className="min-w-0 flex-1 border-l border-line pl-3">
+            <p className="truncate text-[14px] font-medium leading-tight">{goal?.label ?? variant.name}</p>
+            <p className="truncate text-[12px] text-ink-3">
+              {variant.formName}
+              {where ? ` · ${where}` : ""}
+              {session.demoScenarioId && <span className="ml-1.5 font-medium text-external">· Demo, fictional data</span>}
             </p>
           </div>
-          <span className="hidden sm:block">
-            <Link href="/privacy" className={btn("ghost", "sm")}>
-              <ShieldCheck className="size-4" /> Privacy
+          {guided ? (
+            <Link href="/workspace/findings" className={btn("ghost", "sm")} title="All details">
+              <LayoutList className="size-4" /> <span className="hidden sm:inline">All details</span>
             </Link>
-          </span>
-          <button onClick={() => openAssistant()} className={btn("secondary", "sm")}>
-            <MessageCircleQuestion className="size-4" /> <span className="hidden sm:inline">Ask</span>
+          ) : (
+            <Link href="/workspace" className={btn("secondary", "sm")}>
+              <ArrowLeft className="size-4" /> <span className="hidden sm:inline">Back to guide</span><span className="sm:hidden">Guide</span>
+            </Link>
+          )}
+          <button onClick={() => openAssistant()} className="rounded-lg p-2 text-ink-2 hover:bg-black/[0.05] sm:hidden" aria-label="Ask a question">
+            <MessageCircleQuestion className="size-5" />
           </button>
+          <Link href="/privacy" className="rounded-lg p-2 text-ink-2 hover:bg-black/[0.05]" title="Privacy" aria-label="Privacy">
+            <ShieldCheck className="size-5" />
+          </Link>
         </div>
-        <nav aria-label="Workspace stages" className="mx-auto max-w-7xl overflow-x-auto px-4 sm:px-6">
-          <ol className="flex min-w-max gap-1 pb-2">
-            {STAGES.map((s, i) => {
-              const active = s.href === "/workspace" ? pathname === "/workspace" : pathname.startsWith(s.href);
-              return (
-                <li key={s.href}>
-                  <Link
-                    href={s.href}
-                    aria-current={active ? "page" : undefined}
-                    className={clsx(
-                      "flex items-center gap-2 rounded-lg px-3 py-1.5 text-[13px] transition-colors",
-                      active ? "bg-ink text-white" : "text-ink-2 hover:bg-black/[0.05]",
-                    )}
-                  >
-                    <span className={clsx("tabular text-[11px]", active ? "text-white/70" : "text-ink-3")}>{i + 1}</span>
-                    {s.label}
-                    {badge[s.href] && (
-                      <span className={clsx("rounded-full px-1.5 text-[11px] tabular", active ? "bg-white/20" : "bg-black/[0.06]")}>{badge[s.href]}</span>
-                    )}
-                  </Link>
-                </li>
-              );
-            })}
-          </ol>
-        </nav>
+        {!guided && (
+          <nav aria-label="Details" className="mx-auto max-w-5xl overflow-x-auto px-5">
+            <ol className="flex min-w-max gap-1 pb-2">
+              {DETAIL_TABS.map((t) => {
+                const active = pathname.startsWith(t.href);
+                return (
+                  <li key={t.href}>
+                    <Link
+                      href={t.href}
+                      aria-current={active ? "page" : undefined}
+                      className={clsx("block rounded-lg px-3 py-1.5 text-[13px]", active ? "bg-ink text-white" : "text-ink-2 hover:bg-black/[0.05]")}
+                    >
+                      {t.label}
+                    </Link>
+                  </li>
+                );
+              })}
+            </ol>
+          </nav>
+        )}
       </header>
 
-      <main className="mx-auto w-full max-w-7xl flex-1 px-4 py-6 sm:px-6 sm:py-8">{children}</main>
+      <main className={clsx("mx-auto w-full flex-1 px-5 pb-28 pt-6", guided ? "max-w-5xl sm:pt-10" : "max-w-7xl sm:pt-8")}>{children}</main>
 
-      <footer className="border-t border-line py-4 text-center text-[12px] text-ink-3">
-        RejectLess is an independent preparation tool — not a government service. It does not submit applications or guarantee approval.
+      <footer className="px-5 pb-6 text-center text-[12px] text-ink-3">
+        RejectLess is not a government service and can&rsquo;t approve applications.
         {session.demoScenarioId && (
           <span className="ml-1 inline-flex items-center gap-1 text-external">
-            <FlaskConical className="size-3" /> All data in this session is fictional.
+            <FlaskConical className="size-3" /> All data here is fictional.
           </span>
         )}
       </footer>
+
+      {!assistantOpen && (
+        <button
+          onClick={() => openAssistant()}
+          className="fixed bottom-6 right-6 z-40 hidden h-12 items-center gap-2 rounded-full bg-ink px-5 text-[14px] font-medium text-white shadow-[0_12px_30px_-10px_rgba(30,33,36,0.6)] transition-transform hover:-translate-y-0.5 sm:inline-flex"
+          aria-label="Ask a question"
+        >
+          <MessageCircleQuestion className="size-5" /> Ask
+        </button>
+      )}
 
       <ConsentGate />
       <AssistantPanel />
