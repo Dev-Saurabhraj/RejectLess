@@ -1,0 +1,171 @@
+import type { OfficialSource } from "@/engine/types";
+
+// Every rule cites at least one of these. "official" = government publisher.
+// "secondary" = reputable reporting used where the official text could not be retrieved;
+// rules relying only on secondary sources are labelled "verify" in the UI.
+// Accessed dates reflect the research pass for this rule pack.
+
+const ACCESSED = "2026-11-02";
+
+export const SOURCES: OfficialSource[] = [
+  {
+    id: "epfo-portal",
+    title: "EPFO — Employees' Provident Fund Organisation (official website)",
+    publisher: "EPFO, Ministry of Labour & Employment",
+    url: "https://www.epfindia.gov.in/",
+    kind: "official",
+    accessedOn: ACCESSED,
+  },
+  {
+    id: "epfo-member-portal",
+    title: "EPFO Member e-Sewa (Unified Member Portal) — online claims, KYC, profile",
+    publisher: "EPFO",
+    url: "https://unifiedportal-mem.epfindia.gov.in/memberinterface/",
+    kind: "official",
+    accessedOn: ACCESSED,
+  },
+  {
+    id: "egazette",
+    title: "e-Gazette of India — search G.S.R. 525(E), 29 June 2026 (Employees' Provident Funds Scheme, 2026)",
+    publisher: "Department of Publication, Government of India",
+    url: "https://egazette.gov.in/",
+    kind: "official",
+    publishedOn: "2026-06-29",
+    accessedOn: ACCESSED,
+    note: "The scheme text itself could not be retrieved during research; the rules below rely on the secondary summaries listed with them.",
+  },
+  {
+    id: "taxguru-epf-2026",
+    title: "Employees' Provident Fund Scheme, 2026: Ten Major Changes",
+    publisher: "TaxGuru",
+    url: "https://taxguru.in/corporate-law/employees-provident-fund-scheme-2026-ten-major-changes.html",
+    kind: "secondary",
+    accessedOn: ACCESSED,
+  },
+  {
+    id: "bs-epf-2026",
+    title: "EPF withdrawal rules changed? Here's what the new Scheme 2026 means",
+    publisher: "Business Standard",
+    url: "https://www.business-standard.com/finance/personal-finance/epf-withdrawal-rules-changed-here-s-what-the-new-scheme-2026-means-126070900577_1.html",
+    kind: "secondary",
+    publishedOn: "2026-07-09",
+    accessedOn: ACCESSED,
+  },
+  {
+    id: "tribune-cbt-2025",
+    title: "EPFO allows 100% EPF part withdrawals; 13 rules merged into 3 categories (CBT decision, Oct 2025)",
+    publisher: "The Tribune",
+    url: "https://www.tribuneindia.com/news/india/epfo-allows-100-epf-part-withdrawals-13-rules-merged-into-3-categories",
+    kind: "secondary",
+    publishedOn: "2025-10-13",
+    accessedOn: ACCESSED,
+  },
+  {
+    id: "bs-cheque-2025",
+    title: "EPFO eases withdrawal process, no need for bank account verification",
+    publisher: "Business Standard",
+    url: "https://www.business-standard.com/finance/news/epfo-eases-withdrawal-process-no-need-for-bank-account-verification-125040300869_1.html",
+    kind: "secondary",
+    publishedOn: "2025-04-03",
+    accessedOn: ACCESSED,
+    note: "Reports the Ministry of Labour statement removing the cheque-leaf / attested passbook upload for online claims.",
+  },
+  {
+    id: "theprint-cheque-2025",
+    title: "EPFO eases claim process; cancelled cheque, bank account verification by employers not needed",
+    publisher: "ThePrint (PTI)",
+    url: "https://theprint.in/economy/epfo-eases-claim-process-cancelled-cheque-bank-account-verification-by-employers-not-needed/2576713/",
+    kind: "secondary",
+    publishedOn: "2025-04-03",
+    accessedOn: ACCESSED,
+  },
+  {
+    id: "incometax-portal",
+    title: "Income Tax Department (official portal) — TDS on EPF withdrawal (Sec. 192A of the 1961 Act / Sec. 392(7) of the 2025 Act)",
+    publisher: "Income Tax Department, Government of India",
+    url: "https://www.incometax.gov.in/",
+    kind: "official",
+    accessedOn: ACCESSED,
+  },
+  {
+    id: "tds-192a-summary",
+    title: "TDS on PF withdrawal: rules, rates and Form 15G/15H",
+    publisher: "Bajaj Finserv (secondary summary)",
+    url: "https://www.bajajfinserv.in/investments/tds-on-pf-withdrawal",
+    kind: "secondary",
+    accessedOn: ACCESSED,
+    note: "Secondary sources report: TDS applies when service < 5 years and amount ≥ ₹50,000; 10% with PAN, 20% without PAN (since 1 Apr 2023). From 1 Apr 2026, Form 121 replaces Forms 15G/15H under the Income-tax Act, 2025.",
+  },
+  {
+    id: "form10c-summary",
+    title: "EPS Form 10C: eligibility for withdrawal benefit",
+    publisher: "Canara HSBC Life (secondary summary)",
+    url: "https://www.canarahsbclife.com/blog/tax-saving/form-10c-in-epfo",
+    kind: "secondary",
+    accessedOn: ACCESSED,
+    note: "Withdrawal benefit applies where eligible service is under 10 years. Sources disagree on whether the 6-month minimum still applies after the 2024 amendment.",
+  },
+  {
+    id: "nsp-portal",
+    title: "National Scholarship Portal (official)",
+    publisher: "Government of India",
+    url: "https://scholarships.gov.in/",
+    kind: "official",
+    accessedOn: ACCESSED,
+  },
+  {
+    id: "education-ministry",
+    title: "Ministry of Education, Department of Higher Education — scholarship schemes",
+    publisher: "Ministry of Education",
+    url: "https://www.education.gov.in/",
+    kind: "official",
+    accessedOn: ACCESSED,
+  },
+  {
+    id: "csss-summary",
+    title: "Central Sector Scheme of Scholarship for College and University Students — eligibility & documents",
+    publisher: "Shiksha / Buddy4Study (secondary summaries)",
+    url: "https://www.buddy4study.com/article/central-sector-scholarship",
+    kind: "secondary",
+    accessedOn: ACCESSED,
+    note: "Reported criteria: above 80th percentile of successful candidates in Class XII of the relevant board/stream; family income < ₹4.5 lakh p.a.; regular course; not availing another scholarship.",
+  },
+  {
+    id: "rbi-ifsc",
+    title: "RBI — IFSC and MICR codes of bank branches",
+    publisher: "Reserve Bank of India",
+    url: "https://www.rbi.org.in/Scripts/IFSCMICRDetails.aspx",
+    kind: "official",
+    accessedOn: ACCESSED,
+    note: "IFSC is an 11-character code: 4-letter bank code, a 0 (zero), and a 6-character branch code.",
+  },
+  {
+    id: "uidai",
+    title: "UIDAI — Aadhaar update services",
+    publisher: "Unique Identification Authority of India",
+    url: "https://uidai.gov.in/",
+    kind: "official",
+    accessedOn: ACCESSED,
+  },
+  {
+    id: "pan-services",
+    title: "PAN — changes or correction in PAN data (Protean / UTIITSL via Income Tax Department)",
+    publisher: "Income Tax Department",
+    url: "https://www.incometax.gov.in/",
+    kind: "official",
+    accessedOn: ACCESSED,
+  },
+  {
+    id: "rejectless-method",
+    title: "RejectLess methodology — data-quality and consistency checks",
+    publisher: "RejectLess",
+    url: "/about#methodology",
+    kind: "secondary",
+    accessedOn: ACCESSED,
+    note: "Not an official requirement. Generic checks that reduce avoidable mismatches.",
+  },
+];
+
+export function getSource(id: string): OfficialSource | undefined {
+  return SOURCES.find((s) => s.id === id);
+}

@@ -1,0 +1,211 @@
+import type { DocTypeId, FieldKey } from "@/engine/types";
+
+export interface DocTypeDef {
+  id: DocTypeId;
+  label: string;
+  short: string;
+  description: string;
+  /** Fields RejectLess extracts — and nothing else (data minimisation). */
+  fields: FieldKey[];
+  /** Fields that should normally be readable on this document. */
+  keyFields: FieldKey[];
+  /** Keywords used to auto-detect the document type (lower-case). */
+  keywords: { term: string; weight: number }[];
+  uploadTip: string;
+}
+
+export const DOC_TYPES: Record<DocTypeId, DocTypeDef> = {
+  aadhaar: {
+    id: "aadhaar",
+    label: "Aadhaar (identity document)",
+    short: "Aadhaar",
+    description: "Used to compare your name, date of birth and gender with other records.",
+    fields: ["name", "name_local", "dob", "yob", "gender", "aadhaar_number"],
+    keyFields: ["name", "dob", "aadhaar_number"],
+    keywords: [
+      { term: "aadhaar", weight: 3 },
+      { term: "आधार", weight: 3 },
+      { term: "unique identification authority", weight: 3 },
+      { term: "government of india", weight: 1 },
+      { term: "भारत सरकार", weight: 1 },
+      { term: "vid", weight: 1 },
+    ],
+    uploadTip: "Use the masked e-Aadhaar PDF if you can — RejectLess only needs the last 4 digits.",
+  },
+  pan: {
+    id: "pan",
+    label: "PAN card",
+    short: "PAN",
+    description: "Needed for TDS purposes in some EPF withdrawals; also used to compare name and date of birth.",
+    fields: ["name", "father_name", "dob", "pan_number"],
+    keyFields: ["name", "dob", "pan_number"],
+    keywords: [
+      { term: "permanent account number", weight: 4 },
+      { term: "income tax department", weight: 3 },
+      { term: "आयकर विभाग", weight: 3 },
+      { term: "स्थायी लेखा संख्या", weight: 3 },
+    ],
+    uploadTip: "The e-PAN PDF or a clear photo of the front side is enough.",
+  },
+  bank_passbook: {
+    id: "bank_passbook",
+    label: "Bank passbook (first page) or bank statement",
+    short: "Bank passbook",
+    description: "Used to check that the account holder name, account number and IFSC you will enter match your bank's records.",
+    fields: ["account_holder", "account_number", "ifsc", "bank_name", "branch"],
+    keyFields: ["account_holder", "account_number", "ifsc"],
+    keywords: [
+      { term: "passbook", weight: 3 },
+      { term: "account statement", weight: 3 },
+      { term: "statement of account", weight: 3 },
+      { term: "ifsc", weight: 2 },
+      { term: "account holder", weight: 2 },
+      { term: "a/c no", weight: 2 },
+      { term: "branch", weight: 1 },
+    ],
+    uploadTip: "Only the first page with your name, account number and IFSC is needed — not your transactions.",
+  },
+  cancelled_cheque: {
+    id: "cancelled_cheque",
+    label: "Cancelled cheque",
+    short: "Cancelled cheque",
+    description: "An alternative bank-detail source. Useful for cross-checking the account number and IFSC.",
+    fields: ["account_holder", "account_number", "ifsc", "bank_name", "branch"],
+    keyFields: ["account_number", "ifsc"],
+    keywords: [
+      { term: "cancelled", weight: 3 },
+      { term: "pay", weight: 1 },
+      { term: "or bearer", weight: 3 },
+      { term: "rupees", weight: 2 },
+      { term: "cheque", weight: 2 },
+    ],
+    uploadTip: "Make sure the printed account holder name (if any), account number and IFSC are visible.",
+  },
+  epf_passbook: {
+    id: "epf_passbook",
+    label: "EPF member passbook / service details",
+    short: "EPF passbook",
+    description: "Gives your employment dates and PF balance, which decide which claim types you can file.",
+    fields: ["name", "father_name", "dob", "uan", "member_id", "establishment", "doj", "doe", "balance"],
+    keyFields: ["name", "uan", "doj", "balance"],
+    keywords: [
+      { term: "member passbook", weight: 4 },
+      { term: "uan", weight: 3 },
+      { term: "provident fund", weight: 3 },
+      { term: "establishment", weight: 2 },
+      { term: "date of joining", weight: 1 },
+    ],
+    uploadTip: "Download the member passbook from the EPFO passbook portal, or upload your service details.",
+  },
+  marksheet_12: {
+    id: "marksheet_12",
+    label: "Class XII marksheet",
+    short: "Class XII marksheet",
+    description: "Used to compare your name, date of birth and father's name, and to read your marks.",
+    fields: ["name", "father_name", "dob", "roll_number", "board", "year_of_passing", "percentage", "stream"],
+    keyFields: ["name", "roll_number", "percentage"],
+    keywords: [
+      { term: "statement of marks", weight: 3 },
+      { term: "marksheet", weight: 3 },
+      { term: "senior secondary", weight: 3 },
+      { term: "class xii", weight: 3 },
+      { term: "roll no", weight: 2 },
+      { term: "board of", weight: 1 },
+    ],
+    uploadTip: "A DigiLocker copy or a clear scan of the full marksheet works best.",
+  },
+  income_certificate: {
+    id: "income_certificate",
+    label: "Income certificate",
+    short: "Income certificate",
+    description: "Shows annual family income, issued by a competent state authority. Often in Hindi or another regional language.",
+    fields: ["name", "father_name", "annual_income", "issue_date", "issuing_authority"],
+    keyFields: ["name", "annual_income", "issue_date"],
+    keywords: [
+      { term: "income certificate", weight: 4 },
+      { term: "आय प्रमाण", weight: 4 },
+      { term: "वार्षिक आय", weight: 3 },
+      { term: "annual income", weight: 3 },
+      { term: "tehsildar", weight: 1 },
+      { term: "तहसीलदार", weight: 1 },
+    ],
+    uploadTip: "Make sure the issue date, income amount and the issuing officer's details are readable.",
+  },
+  bonafide_certificate: {
+    id: "bonafide_certificate",
+    label: "Bonafide / student certificate",
+    short: "Bonafide certificate",
+    description: "Confirms you are enrolled in a regular course at your institution.",
+    fields: ["name", "institution", "course", "course_year", "study_mode", "academic_year"],
+    keyFields: ["name", "institution", "course"],
+    keywords: [
+      { term: "bonafide", weight: 4 },
+      { term: "bona fide", weight: 4 },
+      { term: "is a student of", weight: 3 },
+      { term: "is studying", weight: 2 },
+      { term: "principal", weight: 1 },
+    ],
+    uploadTip: "Ask your institution for a current-year certificate that states the course and mode of study.",
+  },
+  unknown: {
+    id: "unknown",
+    label: "Unrecognised document",
+    short: "Unrecognised",
+    description: "RejectLess could not recognise this document. You can choose its type manually.",
+    fields: [],
+    keyFields: [],
+    keywords: [],
+    uploadTip: "",
+  },
+};
+
+export const FIELD_LABELS: Record<FieldKey, string> = {
+  name: "Name",
+  name_local: "Name (local script)",
+  father_name: "Father's / guardian's name",
+  dob: "Date of birth",
+  yob: "Year of birth",
+  gender: "Gender",
+  aadhaar_number: "Aadhaar number",
+  pan_number: "PAN",
+  account_number: "Account number",
+  ifsc: "IFSC",
+  bank_name: "Bank",
+  branch: "Branch",
+  account_holder: "Account holder name",
+  uan: "UAN",
+  member_id: "PF member ID",
+  establishment: "Establishment",
+  doj: "Date of joining",
+  doe: "Date of exit",
+  balance: "PF balance",
+  roll_number: "Roll number",
+  board: "Board",
+  year_of_passing: "Year of passing",
+  percentage: "Percentage",
+  stream: "Stream",
+  annual_income: "Annual family income",
+  issue_date: "Issue date",
+  issuing_authority: "Issuing authority",
+  institution: "Institution",
+  course: "Course",
+  course_year: "Year of study",
+  study_mode: "Mode of study",
+  academic_year: "Academic year",
+};
+
+export const SENSITIVE_FIELDS: FieldKey[] = ["aadhaar_number", "account_number", "pan_number", "uan", "member_id"];
+
+export const PROFILE_SECTIONS: { id: string; label: string; fields: FieldKey[] }[] = [
+  { id: "personal", label: "Personal information", fields: ["name", "name_local", "father_name", "dob", "yob", "gender"] },
+  { id: "identity", label: "Identity information", fields: ["aadhaar_number", "pan_number", "uan", "member_id"] },
+  { id: "banking", label: "Banking information", fields: ["account_holder", "account_number", "ifsc", "bank_name", "branch"] },
+  {
+    id: "application",
+    label: "Application information",
+    fields: [
+      "establishment", "doj", "doe", "balance", "board", "roll_number", "year_of_passing", "percentage", "stream",
+      "annual_income", "issue_date", "issuing_authority", "institution", "course", "course_year", "study_mode", "academic_year",
+    ],
+  },
+];
