@@ -12,6 +12,7 @@ const FALLBACK_MODEL = "llama-3.3-70b-versatile";
 const Payload = z.object({
   question: z.string().min(1).max(600),
   application: z.string().max(300),
+  context: z.string().max(300).optional(),
   findings: z
     .array(
       z.object({
@@ -78,6 +79,7 @@ export async function POST(req: Request) {
 
   const user = [
     `APPLICATION: ${body.application}`,
+    ...(body.context ? [`USER CONTEXT (from onboarding, no personal details): ${body.context}`] : []),
     "",
     "FINDINGS (from deterministic checks; focus marked *):",
     ...body.findings.map((f) => `${f.focus ? "*" : "-"} ${f.id} [${f.status}/${f.severity}, basis: ${f.basis}] ${f.title}: ${f.summary}`),

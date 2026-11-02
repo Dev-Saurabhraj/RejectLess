@@ -6,6 +6,7 @@ import { getApplication } from "@/knowledge/applications";
 import { isOpenIssue } from "@/engine/run";
 import { nameTokens } from "@/engine/text/normalize";
 import { retrieve } from "./retrieval";
+import { ROLES, WORK_TYPES, stateName } from "@/knowledge/onboarding";
 import { KB, type KbChunk } from "./kb";
 
 export interface AssistantAnswer {
@@ -89,8 +90,18 @@ export function redact(text: string, session: Session | null): { text: string; r
 export interface AiPayload {
   question: string;
   application: string;
+  /** Onboarding answers only (role, work type, state) — never identifiers. */
+  context?: string;
   findings: { id: string; title: string; status: string; severity: string; summary: string; basis: string; focus: boolean }[];
   passages: { id: string; title: string; text: string; confidence: string }[];
+}
+
+function profileContext(session: Session): string | undefined {
+  const p = session.profile;
+  if (!p) return undefined;
+  const role = ROLES.find((r) => r.id === p.role)?.label;
+  const work = WORK_TYPES.find((w) => w.id === p.work)?.label;
+  return [role && `User: ${role}`, work && `Work: ${work}`, p.state && `State: ${stateName(p.state)}`].filter(Boolean).join("; ");
 }
 
 export function buildPayload(question: string, session: Session, focusKey?: string): { payload: AiPayload; chunks: KbChunk[]; redactedCount: number } {
@@ -105,6 +116,7 @@ export function buildPayload(question: string, session: Session, focusKey?: stri
     payload: {
       question: red.text.slice(0, 600),
       application: `${app?.name ?? ""} — ${variant?.name ?? ""} (${variant?.formName ?? ""})`,
+      context: profileContext(session),
       findings: relevant.map((f, i) => ({
         id: `F${i + 1}`,
         title: f.title,
@@ -214,6 +226,11 @@ export async function answerWithAi(payload: AiPayload, chunks: KbChunk[]): Promi
   const data = (await r.json()) as { answer: string; citations: string[]; followUps?: string[] };
   // Only accept citations that point to passages we actually provided.
   const valid = (data.citations ?? []).map((id) => chunks.find((c) => c.id === id)).filter(Boolean) as KbChunk[];
-  const text = data.answer.replace(/\[([A-Z]-[A-Za-z0-9-]+)\]/g, (m, id) => (chunks.some((c) => c.id === id) ? "" : m)).trim();
+  // Inline citation tags are shown as source chips instead; tolerate spacing and commas inside the brackets.
+  const text = data.answer
+    .replace(/\[\s*([A-Z]-[A-Za-z0-9-]+(?:\s*,\s*[A-Z]-[A-Za-z0-9-]+)*)\s*\]/g, (m, ids: string) => (ids.split(/\s*,\s*/).every((id) => chunks.some((c) => c.id === id)) ? "" : m))
+    .replace(/[ \t]+([.,;:])/g, "$1")
+    .replace(/ {2,}/g, " ")
+    .trim();
   return { text, citations: valid, mode: "ai", grounded: valid.length > 0, followUps: data.followUps?.slice(0, 3) };
 }
