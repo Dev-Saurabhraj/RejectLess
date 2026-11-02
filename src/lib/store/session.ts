@@ -5,6 +5,9 @@ import { createJSONStorage, persist, type StateStorage } from "zustand/middlewar
 import { del, get, set, clear, keys, createStore } from "idb-keyval";
 import type { DocTypeId, DocumentRecord, ExtractedField, FieldKey, FindingResolution, ResolutionState, TextLine, ValidationRun } from "@/engine/types";
 import { reconcile } from "@/engine/run";
+import type { UserProfile } from "@/knowledge/onboarding";
+
+export type GuideStep = "documents" | "confirm" | "details" | "check" | "results";
 
 // Everything lives in this browser's IndexedDB. Nothing is sent to a server
 // except (optionally, with consent) privacy-safe summaries for the AI assistant.
@@ -42,13 +45,20 @@ export interface Session {
   runs: ValidationRun[];
   resolutions: Record<string, FindingResolution>;
   activity: { at: string; text: string }[];
+  /** Onboarding answers (role, work type, state, goal) — not personal identifiers. */
+  profile?: UserProfile;
+  guideStep: GuideStep;
+  skippedDocs: DocTypeId[];
 }
 
 interface State {
   session: Session | null;
   consent: Consent;
   hydrated: boolean;
-  startSession: (appId: string, variantId: string, demoScenarioId?: string) => Session;
+  startSession: (appId: string, variantId: string, demoScenarioId?: string, profile?: UserProfile) => Session;
+  setGuideStep: (step: GuideStep) => void;
+  skipDoc: (t: DocTypeId) => void;
+  unskipDoc: (t: DocTypeId) => void;
   setVariant: (variantId: string) => void;
   addDocument: (doc: DocumentRecord) => void;
   updateDocument: (id: string, patch: Partial<DocumentRecord>) => void;
@@ -85,7 +95,7 @@ export const useSession = create<State>()(
       consent: {},
       hydrated: false,
 
-      startSession(appId, variantId, demoScenarioId) {
+      startSession(appId, variantId, demoScenarioId, profile) {
         const t = now();
         const session: Session = {
           id: newSessionId(),
@@ -100,11 +110,26 @@ export const useSession = create<State>()(
           runs: [],
           resolutions: {},
           activity: [{ at: t, text: demoScenarioId ? "Demo session started with fictional data" : "Session started" }],
+          profile,
+          guideStep: "documents",
+          skippedDocs: [],
         };
         const old = getState().session;
         if (old) void deletePreviews(old.documents.map((d) => d.id));
         setState({ session });
         return session;
+      },
+
+      setGuideStep(step) {
+        mutate(setState, (s) => ({ ...s, guideStep: step }));
+      },
+
+      skipDoc(t) {
+        mutate(setState, (s) => ({ ...s, skippedDocs: Array.from(new Set([...(s.skippedDocs ?? []), t])) }));
+      },
+
+      unskipDoc(t) {
+        mutate(setState, (s) => ({ ...s, skippedDocs: (s.skippedDocs ?? []).filter((x) => x !== t) }));
       },
 
       setVariant(variantId) {

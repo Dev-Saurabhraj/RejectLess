@@ -30,6 +30,7 @@ export interface Persona {
     academicYear: string;
   };
   city: string;
+  stateCode: string;
 }
 
 export const PERSONAS: Record<string, Persona> = {
@@ -47,6 +48,7 @@ export const PERSONAS: Record<string, Persona> = {
     bank: { holder: "Anjali Verma", account: "50210048213377", ifsc: "BDBK0004521", bank: "Bharat Demo Bank", branch: "Hazratganj", city: "Lucknow" },
     epf: { uan: "100987654321", memberId: "UPLKO00451230000012345", establishment: "Avadh Demo Textiles Pvt Ltd", dojMonthsAgo: 88, doeMonthsAgo: 14, balance: 384250 },
     city: "Lucknow",
+    stateCode: "UP",
   },
   saurabh: {
     id: "saurabh",
@@ -62,6 +64,7 @@ export const PERSONAS: Record<string, Persona> = {
     bank: { holder: "Saurabh Kumar", account: "30451287690", ifsc: "BDBK0001234", bank: "Bharat Demo Bank", branch: "Kankarbagh", city: "Patna" },
     epf: { uan: "101234567890", memberId: "BRPAT00782340000067890", establishment: "Ganga Demo Logistics LLP", dojMonthsAgo: 43, doeMonthsAgo: 15, balance: 142600 },
     city: "Patna",
+    stateCode: "BR",
   },
   imran: {
     id: "imran",
@@ -77,6 +80,7 @@ export const PERSONAS: Record<string, Persona> = {
     bank: { holder: "Imran Ali", account: "71100235546", ifsc: "JSBX0000915", bank: "Janata Sample Bank", branch: "MP Nagar", city: "Bhopal" },
     epf: { uan: "100555123987", memberId: "MPBPL00311200000055021", establishment: "Narmada Demo Engineering Works", dojMonthsAgo: 143, doeMonthsAgo: 8, balance: 612480 },
     city: "Bhopal",
+    stateCode: "MP",
   },
   kavita: {
     id: "kavita",
@@ -92,6 +96,7 @@ export const PERSONAS: Record<string, Persona> = {
     bank: { holder: "Kavita Yadav", account: "88020019043112", ifsc: "JSBX0002210", bank: "Janata Sample Bank", branch: "Sector 17", city: "Chandigarh" },
     epf: { uan: "101876543219", memberId: "PBCHD00912340000090431", establishment: "Shivalik Demo Healthcare Pvt Ltd", dojMonthsAgo: 8, balance: 64300 },
     city: "Chandigarh",
+    stateCode: "CH",
   },
   priya: {
     id: "priya",
@@ -120,6 +125,7 @@ export const PERSONAS: Record<string, Persona> = {
       academicYear: "2026-27",
     },
     city: "Jaipur",
+    stateCode: "RJ",
   },
   rahul: {
     id: "rahul",
@@ -148,6 +154,7 @@ export const PERSONAS: Record<string, Persona> = {
       academicYear: "2026-27",
     },
     city: "Jaipur",
+    stateCode: "RJ",
   },
 };
 
