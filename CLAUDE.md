@@ -1,0 +1,94 @@
+# RejectLess — guide for Claude and the team
+
+@AGENTS.md
+
+RejectLess is a privacy-first **application-readiness checker** for Indian government applications. A user picks an application, adds documents, and RejectLess reads them **in the browser**, compares them with each other and with versioned rules, and explains every problem with evidence and a fix. It is NOT a government service: it never submits applications, verifies against government databases, or promises approval.
+
+Current status and roadmap: [docs/PROGRESS.md](docs/PROGRESS.md) — update it when you finish something.
+
+## Commands
+
+```bash
+npm install        # postinstall copies pdf.js worker + Devanagari font into /public
+npm run dev        # http://localhost:3000
+npm test           # Vitest engine tests — must stay green
+npx tsc --noEmit   # type-check
+npx eslint src
+npm run build      # production build (stop `npm run dev` first; both use .next)
+```
+
+Optional `.env` (gitignored): `GROQ_API_KEY`, `GROQ_MODEL`. See `.env.example`. Never commit keys.
+
+## Product rules (non-negotiable)
+
+1. **Code decides, models extract, the LLM only explains.** Every pass/fail comes from a deterministic check in `src/engine/checks.ts`. The AI never creates, changes or re-judges a finding.
+2. **No exact personal details to any AI.** The assistant receives only the redacted question (`redact()`), the engine's `Finding.abstract` (written without names/numbers/dates) and knowledge-base passages. If you add a finding, write its `abstract` without personal values.
+3. **Documents never leave the browser.** No server storage. Originals aren't kept; only extracted fields + small previews in IndexedDB. Aadhaar is reduced to last 4 digits + checksum result at extraction (`minimised`).
+4. **Never invent requirements or sources.** Every rule cites `sourceIds` and a `basis`: `official` | `secondary` (UI shows "Verify") | `engine` (RejectLess data-quality check) | `demo`. Research before adding a rule; if you can't confirm the official text, mark it `secondary`.
+5. **Honest outcomes.** Format checks are not verification. Missing input → an explicit "Could not check" (`insufficient()`), never a silent skip or a pass. Things only EPFO/NSP/banks can confirm are `external`.
+6. **Demo data is fictional** — invented people, fictional banks (`BDBK`, `JSBX`, `UDCB`), SPECIMEN watermark. Never use real identifiers.
+
+## Architecture
+
+```
+src/
+  engine/            pure TypeScript, no React/browser APIs — unit-test everything here
+    types.ts         domain model (DocumentRecord, ExtractedField, RuleDef, Finding, …)
+    text/            transliterate (Devanagari→Latin, schwa deletion), normalize + phoneticKey,
+                     similarity, devanagariRepair (fix visual-order Hindi from PDFs)
+    identity/        compareNames → consistent | minor_variation | mismatch | insufficient
+    validators/      Aadhaar Verhoeff, PAN, IFSC, dates (DD/MM default), amounts, masking
+    reference/ifsc   dated IFSC snapshot (fictional banks only for now)
+    extract/         classify() + per-document label parsers → fields with bbox + confidence
+    quality.ts       sharpness/brightness/contrast/edge-ink metrics → QualityIssue[]
+    profile.ts       merges document fields + user's draft into one comparison profile
+    checks.ts        CHECKS registry: rule.check → implementation producing Findings
+    run.ts           staged runner (STAGES), sorting, reconcile() for resolution history
+  knowledge/         sources.ts, documents.ts (doc types, field labels), rules.ts, applications.ts
+  lib/
+    ingest/          pdf.ts (pdf.js), ocr.ts (Tesseract eng+hin), raster.ts, pipeline.ts
+    store/session.ts Zustand + IndexedDB persistence, 24 h sliding expiry, deleteSession()
+    actions.ts       addFiles (queued), changeDocType, loadScenario, applyFix
+    assistant/       kb.ts (knowledge base), retrieval.ts (BM25), assistant.ts (redact, local answers, AI client)
+    report.ts        jsPDF readiness report (client-side)
+  demo/              personas, scenarios (+ buildScenario), render.ts (canvas specimens),
+                     package.ts (→ searchable PDF or degraded JPEG), devHarness.ts (dev-only window.__rl)
+  app/               Next.js routes: /, /apply, /apply/[appId], /workspace/*, /demo, /privacy, /about,
+                     /api/assistant (only server code; calls Groq)
+  components/        ui.tsx (design primitives), site.tsx, workspace/*
+```
+
+### Adding things
+
+- **A new rule**: add a `RuleDef` in `knowledge/rules.ts` (reuse an existing `check` with `params` if possible), add its id to the variant's `ruleIds` in `knowledge/applications.ts`, add sources to `sources.ts`. New check logic goes in `CHECKS` in `engine/checks.ts` with a test.
+- **A new application**: add an `ApplicationDef` (variants, documents with a `why`, draftFields, ruleIds). Research first.
+- **A new document type**: `DocTypeId` in `engine/types.ts`, definition + keywords in `knowledge/documents.ts`, a parser in `engine/extract/index.ts`, a layout in `demo/render.ts`, and tests in `extract.test.ts`.
+- **A demo scenario**: `demo/scenarios.ts` (`SCENARIOS`), with `fixes` if it should show the re-check flow.
+
+## Gotchas we already hit (read before debugging)
+
+- **Next.js 16.4 with Cache Components** — read `node_modules/next/dist/docs/` first. Workspace pages are client-only, so `app/workspace/layout.tsx` sets `export const instant = false`. Server `GET` route handlers are prerendered unless they call `await connection()`.
+- **No `requestAnimationFrame` in processing code.** It pauses in background tabs and froze document processing. pdf.js renders with `intent: "print"` for this reason; the check page yields with `setTimeout`.
+- **Zustand selectors must return stable values** — `useSession(s => s.session?.x.filter(...))` causes an infinite render loop. Select the raw value, derive outside.
+- **Tesseract runs in PSM 11 (sparse text).** Auto mode dropped large isolated text like the masked Aadhaar number.
+- **Hindi PDF text comes out in visual order** ("शमार्" for "शर्मा"); `repairVisualOrder` fixes it in `pdf.ts`.
+- **Devanagari regex**: use `\uXXXX` escapes — nukta characters are decomposed and break character ranges.
+- **Don't edit files with `node -e`/`sed` containing backslashes** — escapes get mangled (we shipped literal backspace characters once). Use the editor tool or a script file with `String.raw`.
+- `pdf-lib`'s fontkit needs `regenerator-runtime` (imported in `demo/package.ts`).
+- jsPDF fonts are Latin-1 only; `report.ts` transliterates Devanagari and replaces symbols.
+- `btn()` already sets `inline-flex`; for responsive hiding wrap it (`<span className="hidden sm:block">`) instead of adding `hidden`.
+
+## Testing
+
+- `npm test` covers name matching, transliteration, Hindi repair, validators and extraction.
+- End-to-end in the browser (dev only): open `/demo`, then in the console
+  `await window.__rl.evaluate("multiple")`, `await window.__rl.evaluate("multiple", true)` (with fixes applied), or
+  `await window.__rl.evaluateCustom({ variantId: "nsp", defects: ["dob_swap"], photoDocs: true })`.
+  Each scenario's `expected` text in `scenarios.ts` says what should be found. Re-run all scenarios after changing extraction, OCR or checks.
+
+## Conventions
+
+- TypeScript strict; match the surrounding style (small helpers, short comments explaining *why*).
+- UI copy: plain language for first-time applicants; never "approved/eligible for sure"; say what was checked and what wasn't.
+- Design tokens live in `app/globals.css`; red/amber/green/blue are reserved for validation states.
+- Commits: conventional style (`feat(engine): …`, `fix(ingest): …`). Keep `docs/PROGRESS.md` current.

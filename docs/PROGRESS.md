@@ -1,0 +1,46 @@
+# RejectLess — progress
+
+_Last updated: 2026-11-02. Update this file when you finish or start something; Claude reads it via CLAUDE.md._
+
+## Done (MVP)
+
+- **Applications**: EPFO final settlement (Form 19), pension withdrawal (Form 10C), partial withdrawal (Form 31); NSP Central Sector Scholarship (fresh). Others shown as "coming soon".
+- **Rules**: 34 versioned rules with sources and basis labels. EPF rules follow the EPF Scheme, 2026 (G.S.R. 525(E), 29 Jun 2026).
+- **Document reading (in browser)**: pdf.js text layer + Hindi visual-order repair; Tesseract OCR (English + Hindi); doc-type detection; field extraction with page boxes and confidence; image quality checks; file validation by magic bytes.
+- **Checks**: completeness, quality, cross-document consistency (name, DOB, father's name, account, IFSC, income), Indian-name matching (scripts, spellings, initials, order), Aadhaar/PAN/IFSC formats, IFSC merger reference, EPF eligibility (waiting periods, TDS, service, limits), scholarship eligibility, external-verification items, explicit "could not check".
+- **Workspace**: consent gate → prepare → review (evidence highlights, corrections) → profile → staged check → findings (evidence, reasoning, sources, resolution history) → PDF report.
+- **Assistant**: offline answers from the knowledge base (BM25); optional Groq AI with redaction, privacy-safe summaries and validated citations. Groq key verified working (API level).
+- **Privacy**: local processing, 24 h sliding expiry, originals not kept, Privacy Centre with verified deletion.
+- **Demo**: 14 seeded scenarios with fix walkthroughs; Scenario Builder with 17 plantable defects; dev harness `window.__rl`.
+- **Quality**: 63 unit tests; production build passes; all scenarios verified in browser.
+
+## Known gaps
+
+- [ ] No Playwright end-to-end tests yet.
+- [ ] AI mode not yet clicked through in the UI (API tested); Hindi questions untested.
+- [ ] IFSC reference covers fictional demo banks only — bundle a dated RBI extract.
+- [ ] "Verify" rules need confirming against the official EPF Scheme 2026 gazette text and NSP guidelines.
+- [ ] PDF report shows Devanagari transliterated (no Devanagari font in jsPDF).
+- [ ] Not deployed; no accessibility audit beyond basics.
+
+## Next phases
+
+1. **Demo readiness** — deploy (Vercel, set `GROQ_API_KEY`), test on a phone, Playwright tests for the demo path, rehearse README demo script.
+2. **Trust** — real IFSC dataset, confirm "Verify" rules, Devanagari font in report, accessibility pass.
+3. **Hindi-first** — Hindi UI, Hindi assistant answers, optional voice (Groq Whisper).
+4. **Smarter AI** — embedding retrieval, Private mode (in-browser LLM via WebLLM; deferred by decision), opt-in vision model for messy scans.
+5. **More applications** — PM-KISAN, certificates, more scholarships, more EPFO claim types. Research-backed rules only.
+6. **Assisted service** — CSC operator dashboard, multiple applicants, consent-based handover.
+7. **Integrations** (with authorisation) — DigiLocker, official verification APIs, rejection-notice reading.
+
+## Decisions log
+
+- 2026-11-02 — AI provider: Groq (`openai/gpt-oss-120b`, fallback `llama-3.3-70b-versatile`). AI only explains; it never sees exact personal details.
+- 2026-11-02 — Private mode (in-browser LLM) deferred to a later phase.
+- 2026-11-02 — Scope: EPFO (3 claim types) + one scholarship pack, broad demo rather than many shallow applications.
+
+## Who is working on what
+
+| Area | Person | Status |
+|---|---|---|
+| _example: Playwright tests_ | _name_ | _in progress_ |
