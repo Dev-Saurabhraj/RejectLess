@@ -1,36 +1,69 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# RejectLess
 
-## Getting Started
+**Prepare. Validate. Resolve. Submit with confidence.**
 
-First, run the development server:
+RejectLess checks your documents and the details you plan to enter *before* you submit a government application, explains every problem with evidence, and helps you fix it. It is privacy-first: documents are read inside your browser and never uploaded.
+
+Supported today:
+
+| Application | Claim types |
+|---|---|
+| EPF withdrawal & settlement (EPFO) | Final settlement (Form 19), Pension withdrawal (Form 10C), Partial withdrawal (Form 31) |
+| Central Sector Scholarship (NSP, PM-USP CSSS) | Fresh application |
+
+## Run it
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm install          # also copies the pdf.js worker and Devanagari font into /public
+npm run dev          # http://localhost:3000
+npm test             # engine unit tests (Vitest)
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Optional AI answers: copy `.env.example` to `.env.local` and set `GROQ_API_KEY`. Without a key, the assistant still works offline from the knowledge base.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Demo in 3 minutes
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+1. Open **/demo** → scenario **10 "Fix it and check again"** (or 02, 07, 08).
+2. Watch the fictional documents being generated and read (PDF text layer / on-device OCR).
+3. **Review documents** → click a field to see where it was read on the page.
+4. **Check** → run the readiness check (each stage is real, with timings).
+5. **Findings** → open "Possible name variation": evidence table, highlighted region, reasoning chain, sources.
+6. **Ask** → "How do I fix this?" — grounded answer with cited sources.
+7. In the demo guide, **Apply** the corrections → **Run again** → findings move to **Resolved** with history.
+8. **Report** → download the PDF. **Privacy** → see exactly what is stored, then delete it.
 
-## Learn More
+The **Scenario Builder** on /demo lets you plant any combination of 17 defects (name variants, Hindi names, DOB swaps, account typos, merged IFSCs, blur, cropping, missing documents, eligibility problems) and generates fresh documents that the real pipeline analyses — nothing is pre-scripted.
 
-To learn more about Next.js, take a look at the following resources:
+## Architecture
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+```
+Browser (everything below runs on the user's device)
+  ingest/      pdf.js text layer (+ Devanagari visual-order repair) · Tesseract.js OCR (eng+hin, PSM 11)
+               · image quality (Laplacian sharpness, brightness, contrast, resolution, edge ink)
+  engine/      extraction → unified profile → deterministic rule checks → findings with evidence
+    identity/  Indian-name matching: transliteration (schwa deletion), phonetic keys, token alignment
+    validators Aadhaar Verhoeff, PAN structure, IFSC structure + dated reference snapshot, dates, amounts
+  knowledge/   versioned rule packs with sources, basis (official/secondary/engine/demo), dates
+  assistant/   BM25 retrieval over the knowledge base · offline grounded answers
+  store/       Zustand + IndexedDB, 24 h sliding expiry, one-click deletion
+Server
+  /api/assistant  optional: Groq (OpenAI-compatible) with JSON output + citation validation.
+                  Receives only redacted questions and privacy-safe finding summaries.
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+Key decisions:
 
-## Deploy on Vercel
+- **Code decides, models extract, the LLM only explains.** Every finding comes from a deterministic, unit-tested check. The AI cannot create or change a result; its citations are validated against the passages it was given.
+- **Local-first.** No document server exists. Original files are not retained — only extracted fields (Aadhaar reduced to last 4 digits + checksum result) and small page previews for evidence.
+- **Honest sources.** EPF rules reflect the *Employees' Provident Funds Scheme, 2026* (G.S.R. 525(E), 29 June 2026). Where the official text could not be retrieved, rules are marked **Verify** and cite the secondary sources used. Generic checks are labelled as RejectLess checks; illustrative rules as demo rules.
+- **Next.js 16** (App Router, Cache Components), Tailwind v4, TypeScript.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Limitations
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- No access to EPFO, NSP, UIDAI, banks or the Income Tax Department — those items are shown as *External verification*.
+- The bundled IFSC snapshot covers the demo's fictional banks only; real codes are reported as "could not be checked", never "invalid".
+- All demo people, documents and identifiers are fictional and watermarked SPECIMEN.
+
+## Roadmap
+
+Private mode (in-browser LLM via WebLLM), embedding-based retrieval, Hindi UI, more application packs, CSC operator workspace.
